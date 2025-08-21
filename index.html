@@ -53,8 +53,7 @@
             <div class="task-list-header">
                 <h2>My Tasks</h2>
                 <div class="filters">
-                    <button class="filter-btn active" data-filter="all">All</button>
-                    <button class="filter-btn" data-filter="active">Active</button>
+                    <button class="filter-btn active" data-filter="active">Active</button>
                     <button class="filter-btn" data-filter="completed">Completed</button>
                 </div>
             </div>
@@ -72,7 +71,58 @@
             </div>
         </div>
     </div>
-    <!-- End Custom Confirmation Modal -->
+
+    <!-- Edit Task Modal -->
+    <div id="edit-modal-overlay" class="confirm-overlay">
+        <div id="edit-modal" class="confirm-modal">
+            <h4>Edit Tugas</h4>
+            <div class="form-group">
+                <label for="edit-task-title">Judul:</label>
+                <input type="text" id="edit-task-title" placeholder="Judul Tugas" required>
+            </div>
+            <div class="form-group">
+                <label for="edit-task-description">Deskripsi:</label>
+                <textarea id="edit-task-description" rows="3" placeholder="Deskripsi Tugas"></textarea>
+            </div>
+            <!-- Input untuk alarm yang sebelumnya hilang -->
+            <div class="form-group">
+                <label for="edit-task-datetime">Alarm (Opsional):</label>
+                <input type="datetime-local" id="edit-task-datetime">
+            </div>
+            <div class="confirm-actions">
+                <button id="cancel-edit-btn" class="btn-confirm btn-cancel">Batal</button>
+                <button id="save-edit-btn" class="btn-confirm btn-success">Simpan</button>
+            </div>
+        </div>
+    </div>
+    <!-- Template untuk satu item tugas. Ini tidak akan ditampilkan di halaman. -->
+    <template id="task-template">
+        <li class="task-item">
+            <div class="task-content">
+                <!-- Placeholder untuk judul -->
+                <h3 class="task-title"></h3>
+                <!-- Placeholder untuk deskripsi -->
+                <p class="task-description" style="display: none;"></p>
+                <!-- Placeholder untuk info alarm -->
+                <div class="task-alarm-info" style="display: none;">
+                    <i class="fa-regular fa-bell"></i>
+                    <span class="task-alarm-text"></span>
+                </div>
+            </div>
+            <div class="task-actions">
+                <button class="btn-action btn-complete" aria-label="Complete Task">
+                    <!-- Ikon akan diubah oleh JS -->
+                    <i class="fa-solid fa-check"></i>
+                </button>
+                <button class="btn-action btn-edit" aria-label="Edit Task">
+                    <i class="fa-solid fa-pencil"></i>
+                </button>
+                <button class="btn-action btn-delete" aria-label="Delete Task">
+                    <i class="fa-solid fa-trash"></i>
+                </button>
+            </div>
+        </li>
+    </template>
 
    <!-- Elemen audio untuk suara alarm -->
     <audio id="alarm-sound" src="assets/sounds/alarm.mp3" preload="auto"></audio>

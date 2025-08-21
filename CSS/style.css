@@ -219,41 +219,46 @@ body {
 
 /* --- Gaya untuk Custom Confirmation Modal --- */
 .confirm-overlay {
-    position: fixed;
+    position: fixed; /* Menggunakan 'fixed' agar menutupi seluruh viewport */
     top: 0;
     left: 0;
     width: 100%;
     height: 100%;
     background-color: rgba(0, 0, 0, 0.6);
-    display: none; /* Sembunyikan secara default */
     z-index: 1000;
+
+    /* Menggunakan flexbox untuk menengahkan modal secara default */
+    display: flex;
+    justify-content: center;
+    align-items: center;
+
+    /* Menggunakan opacity dan visibility untuk transisi yang lebih baik */
     opacity: 0;
-    transition: opacity 0.3s ease;
+    visibility: hidden;
+    transition: opacity 0.3s ease, visibility 0.3s ease;
 }
 
 .confirm-overlay.visible {
-    display: block;
     opacity: 1;
+    visibility: visible;
 }
 
 .confirm-modal {
-    position: absolute; /* Diposisikan oleh JavaScript */
+    /* 'position: absolute' tidak lagi diperlukan untuk penengahan default */
     background-color: var(--container-bg);
     border: 1px solid var(--primary-color);
     border-radius: 8px;
     padding: 1.5rem;
     box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
     text-align: center;
-    width: 280px;
-    /* Posisi awal di tengah, akan diubah oleh JS */
-    transform: translate(-50%, -50%) scale(0.9);
-    transition: transform 0.3s ease, opacity 0.3s ease;
-    opacity: 0;
+    width: 90%;
+    max-width: 320px; /* Memberi batas lebar maksimum */
+    transform: scale(0.9); /* Efek zoom saat muncul */
+    transition: transform 0.3s ease;
 }
 
 .confirm-overlay.visible .confirm-modal {
-    transform: translate(-50%, -50%) scale(1);
-    opacity: 1;
+    transform: scale(1);
 }
 
 .confirm-actions {
