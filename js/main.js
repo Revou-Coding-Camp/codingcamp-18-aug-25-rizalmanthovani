@@ -269,6 +269,7 @@ document.addEventListener('DOMContentLoaded', () => {
             const taskToDelete = tasks.find(t => t.id === taskToModifyId);
             if (taskToDelete && taskToDelete.timeoutId) {
                 clearTimeout(taskToDelete.timeoutId);
+                console.log(`Alarm untuk tugas "${taskToDelete.title}" dibatalkan.`);
             }
 
             tasks = tasks.filter(t => t.id !== taskToModifyId);
