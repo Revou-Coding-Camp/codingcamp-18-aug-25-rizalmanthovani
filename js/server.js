@@ -1,187 +1,167 @@
-// Tunggu DOM dimuat sepenuhnya sebelum menjalankan skrip
 document.addEventListener('DOMContentLoaded', () => {
+    // --- Elemen untuk Modal Konfirmasi Kustom ---
+    const confirmOverlay = document.getElementById('custom-confirm-overlay');
+    const confirmModal = document.getElementById('custom-confirm-modal');
+    const confirmDeleteBtn = document.getElementById('confirm-delete-btn');
+    const cancelDeleteBtn = document.getElementById('cancel-delete-btn');
 
-    // --- Pemilih Elemen DOM ---
-    const taskForm = document.getElementById('new-task-form');
-    const taskTitleInput = document.getElementById('new-task-title');
-    const taskDescriptionInput = document.getElementById('new-task-description');
-    const taskDateTimeInput = document.getElementById('new-task-datetime');
+    // Variabel untuk menyimpan task yang akan dihapus
+    let taskToDelete = null;
+
+    const newTaskForm = document.getElementById('new-task-form');
     const taskListContainer = document.getElementById('task-list-container');
-    const alarmSound = document.getElementById('alarm-sound');
-    const filterBtnsContainer = document.querySelector('.filters');
+    const newTaskTitleInput = document.getElementById('new-task-title');
+    const newTaskDescriptionInput = document.getElementById('new-task-description');
 
-    // --- Manajemen Status ---
-    // Muat tugas dari localStorage atau inisialisasi array kosong
-    let tasks = JSON.parse(localStorage.getItem('tasks')) || [];
-    let currentFilter = 'all';
+    // Fungsi untuk membuat elemen task baru
+    const createTaskElement = (title, description) => {
+        const taskItem = document.createElement('li');
+        taskItem.className = 'task-item';
 
-// --- Fungsi Inti ---
+        const taskContent = document.createElement('div');
+        taskContent.className = 'task-content';
 
- // Menyimpan array tugas saat ini ke localStorage.
-    const saveTasks = () => {
-        localStorage.setItem('tasks', JSON.stringify(tasks));
-    };
+        const taskTitle = document.createElement('h3');
+        taskTitle.textContent = title;
 
-// Merender tugas ke DOM berdasarkan filter saat ini.
-    const renderTasks = () => {
-        // Clear the list before rendering
-        taskListContainer.innerHTML = '';
+        const taskDescription = document.createElement('p');
+        taskDescription.textContent = description;
 
-        // Filter tugas berdasarkan filter saat ini
-        const filteredTasks = tasks.filter(task => {
-            if (currentFilter === 'completed') return task.completed;
-            if (currentFilter === 'active') return !task.completed;
-            return true; // 'all'
-        });
-
-        if (filteredTasks.length === 0) {
-            taskListContainer.innerHTML = `<li class="no-tasks-message">You're all caught up! ✨</li>`;
-            return;
+        taskContent.appendChild(taskTitle);
+        if (description) {
+            taskContent.appendChild(taskDescription);
         }
 
-        filteredTasks.forEach(task => {
-            const taskItem = document.createElement('li');
-            taskItem.className = `task-item ${task.completed ? 'completed' : ''}`;
-            taskItem.dataset.id = task.id;
+        const taskActions = document.createElement('div');
+        taskActions.className = 'task-actions';
 
-            const alarmTime = task.alarm ? new Date(task.alarm).toLocaleString('id-ID', { dateStyle: 'medium', timeStyle: 'short' }) : '';
+        const completeButton = document.createElement('button');
+        completeButton.className = 'btn-action btn-complete';
+        completeButton.innerHTML = '<i class="fa-solid fa-check"></i>';
+        completeButton.setAttribute('aria-label', 'Complete Task');
 
-            taskItem.innerHTML = `
-                <div class="task-content">
-                    <p class="task-title">${task.title}</p>
-                    ${task.description ? `<p class="task-description">${task.description}</p>` : ''}
-                    ${task.alarm ? `<p class="task-alarm"><i class="far fa-bell"></i> ${alarmTime}</p>` : ''}
-                </div>
-                <div class="task-actions">
-                    <button class="btn-complete" title="${task.completed ? 'Mark as Incomplete' : 'Mark as Complete'}">
-                        <i class="fas ${task.completed ? 'fa-undo-alt' : 'fa-check-circle'}"></i>
-                    </button>
-                    <button class="btn-delete" title="Delete Task">
-                        <i class="fas fa-trash-alt"></i>
-                    </button>
-                </div>
-            `;
-            taskListContainer.appendChild(taskItem);
-        });
+        const deleteButton = document.createElement('button');
+        deleteButton.className = 'btn-action btn-delete';
+        deleteButton.innerHTML = '<i class="fa-solid fa-trash"></i>';
+        deleteButton.setAttribute('aria-label', 'Delete Task');
+
+        taskActions.appendChild(completeButton);
+        taskActions.appendChild(deleteButton);
+
+        taskItem.appendChild(taskContent);
+        taskItem.appendChild(taskActions);
+
+        return taskItem;
     };
 
-    /**
-     * Menambahkan tugas baru.
-     * @param {Event} e - Peristiwa pengiriman formulir.
-     */
-    const addTask = (e) => {
-        e.preventDefault(); // Cegah pemuatan ulang halaman
+    // Event listener untuk form penambahan task
+    newTaskForm.addEventListener('submit', (event) => {
+        event.preventDefault(); // Mencegah form dari reload halaman
 
-        const title = taskTitleInput.value.trim();
-        const description = taskDescriptionInput.value.trim();
-        const alarm = taskDateTimeInput.value;
+        const title = newTaskTitleInput.value.trim();
+        const description = newTaskDescriptionInput.value.trim();
 
-        if (!title) {
+        if (title === '') {
             alert('Task title cannot be empty!');
             return;
         }
 
-        const newTask = {
-            id: Date.now(),
-            title,
-            description,
-            alarm,
-            completed: false,
-            alarmTriggered: false // Untuk mencegah alarm berulang
-        };
+        const taskElement = createTaskElement(title, description);
+        taskListContainer.appendChild(taskElement);
 
-        tasks.unshift(newTask); // Tambahkan tugas baru ke awal array
-        saveTasks();
-        renderTasks();
+        // Reset form fields
+        newTaskTitleInput.value = '';
+        newTaskDescriptionInput.value = '';
+    });
 
-        taskForm.reset();
-    };
+    // Fungsi terpusat untuk menerapkan filter yang sedang aktif
+    const applyCurrentFilter = () => {
+        const activeFilter = document.querySelector('.filter-btn.active')?.dataset.filter || 'all';
+        const tasks = document.querySelectorAll('.task-item');
 
-/**
-* Menghapus tugas berdasarkan ID-nya.
-* @param {number} id - ID tugas yang akan dihapus.
-*/
-    const deleteTask = (id) => {
-        tasks = tasks.filter(task => task.id !== id);
-        saveTasks();
-        renderTasks();
-    };
-
-/**
-* Mengalihkan status penyelesaian tugas.
-* @param {number} id - ID tugas yang akan dialihkan.
-*/
-    const toggleComplete = (id) => {
-        const task = tasks.find(task => task.id === id);
-        if (task) {
-            task.completed = !task.completed;
-            saveTasks();
-            renderTasks();
-        }
-    };
-
-/**
-* Menangani klik pada daftar tugas untuk tindakan seperti hapus dan selesai.
-* @param {Event} e - Peristiwa klik.
-*/
-    const handleTaskActions = (e) => {
-        const target = e.target;
-        const taskItem = target.closest('.task-item');
-        if (!taskItem) return;
-
-        const taskId = Number(taskItem.dataset.id);
-
-        if (target.closest('.btn-delete')) deleteTask(taskId);
-        else if (target.closest('.btn-complete')) toggleComplete(taskId);
-    };
-    
-/**
-* Menangani klik pada tombol filter.
-* @param {Event} e - Peristiwa klik.
-*/
-    const handleFilter = (e) => {
-        const target = e.target.closest('.filter-btn');
-        if (!target) return;
-
-        document.querySelector('.filter-btn.active').classList.remove('active');
-        target.classList.add('active');
-
-        currentFilter = target.dataset.filter;
-        renderTasks();
-    };
-
-// --- Fungsi Alarm ---
-
-    const requestNotificationPermission = () => {
-        if ('Notification' in window && Notification.permission !== 'denied') {
-            Notification.requestPermission();
-        }
-    };
-
-    const checkAlarms = () => {
-        const now = new Date();
         tasks.forEach(task => {
-            if (!task.completed && !task.alarmTriggered && task.alarm) {
-                if (now >= new Date(task.alarm)) {
-                    alarmSound.play();
-                    if (Notification.permission === 'granted') {
-                        new Notification('Task Reminder!', { body: task.title });
-                    } else {
-                        alert(`Task Due: ${task.title}`);
-                    }
-                    task.alarmTriggered = true;
-                    saveTasks();
-                }
+            switch (activeFilter) {
+                case 'active':
+                    task.style.display = task.classList.contains('completed') ? 'none' : '';
+                    break;
+                case 'completed':
+                    task.style.display = task.classList.contains('completed') ? '' : 'none';
+                    break;
+                default: // 'all'
+                    task.style.display = '';
+                    break;
             }
         });
     };
 
-// --- Inisialisasi & Pendengar Acara ---
-    requestNotificationPermission();
-    renderTasks();
-    setInterval(checkAlarms, 15000); // Periksa alarm setiap 15 detik
+    // --- Fungsi untuk Modal Konfirmasi ---
+    const showConfirmModal = (taskElement, buttonElement) => {
+        taskToDelete = taskElement;
+        const rect = buttonElement.getBoundingClientRect();
+        
+        // Posisikan modal di bawah dan di tengah tombol hapus
+        confirmModal.style.top = `${rect.bottom + window.scrollY + 10}px`;
+        confirmModal.style.left = `${rect.left + rect.width / 2}px`;
+        confirmModal.style.transform = `translateX(-50%)`; // Koreksi posisi horizontal
 
-    taskForm.addEventListener('submit', addTask);
-    taskListContainer.addEventListener('click', handleTaskActions);
-    filterBtnsContainer.addEventListener('click', handleFilter);
+        confirmOverlay.classList.add('visible');
+    };
+
+    const hideConfirmModal = () => {
+        confirmOverlay.classList.remove('visible');
+        taskToDelete = null;
+    };
+    // Event listener untuk tombol complete dan delete pada list task
+    taskListContainer.addEventListener('click', (event) => {
+        const actionButton = event.target.closest('.btn-action');
+        if (!actionButton) return;
+
+        const taskItem = actionButton.closest('.task-item');
+
+        if (actionButton.classList.contains('btn-complete')) {
+            taskItem.classList.toggle('completed');
+            applyCurrentFilter(); // Terapkan filter setelah status tugas berubah
+        }
+
+        if (actionButton.classList.contains('btn-delete')) {
+            // Ganti window.confirm dengan modal kustom
+            showConfirmModal(taskItem, actionButton);
+        }
+    });
+
+    // --- Event Listeners untuk Tombol Modal ---
+    confirmDeleteBtn.addEventListener('click', () => {
+        if (taskToDelete) {
+            taskToDelete.remove();
+        }
+        hideConfirmModal();
+    });
+
+    cancelDeleteBtn.addEventListener('click', hideConfirmModal);
+    confirmOverlay.addEventListener('click', (event) => {
+        if (event.target === confirmOverlay) {
+            hideConfirmModal();
+        }
+    });
+    // Event listener untuk tombol filter
+    document.querySelectorAll('.filter-btn').forEach(button => {
+        button.addEventListener('click', () => {
+            document.querySelector('.filter-btn.active')?.classList.remove('active');
+            button.classList.add('active');
+            applyCurrentFilter(); // Panggil fungsi filter yang sudah dibuat
+        });
+    });
+
+    // --- Logika untuk Tombol Alarm ---
+    // Dipindahkan ke sini agar hanya dijalankan sekali saat halaman dimuat.
+    const alarmButton = document.getElementById('set-alarm-btn');
+
+    if (alarmButton) {
+        alarmButton.addEventListener('click', (event) => {
+            // Mencegah form tersubmit jika tombol ini ada di dalam form
+            event.preventDefault();
+            // Logika untuk menyetel alarm bisa ditambahkan di sini.
+            // Baris classList.toggle() dihapus karena tidak lagi diperlukan.
+        });
+    }
 });
